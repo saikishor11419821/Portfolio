@@ -1,0 +1,7 @@
+Put your real resume PDF here, named:
+
+    Kishor_Resume.pdf
+
+The site expects it at /resume/Kishor_Resume.pdf (see src/data/socials.js -> resumePath).
+Every "Download Resume" button on the site reads from that one constant, so
+you only need to update it in one place if you rename the file.
