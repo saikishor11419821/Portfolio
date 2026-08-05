@@ -154,6 +154,14 @@ required.
 
    with your real endpoint.
 
+   Alternatively, create a `.env` file in the project root and add:
+
+   ```env
+   VITE_FORMSPREE_ENDPOINT=https://formspree.io/f/abcdwxyz
+   ```
+
+   Then restart the Vite dev server.
+
 Prefer EmailJS instead? Swap the `fetch()` call inside the `onSubmit`
 function in `Contact.jsx` for an `emailjs.send(...)` call — the form UI
 and validation stay the same either way.

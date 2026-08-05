@@ -8,11 +8,12 @@ import { socials, resumePath } from "../data/socials";
 
 // ---------------------------------------------------------------------
 // Contact form config.
-// Sign up at https://formspree.io, create a form, and paste its endpoint
-// below. No custom backend is used — the form POSTs directly to Formspree.
-// (Swap this block for an EmailJS call if you'd rather use that instead.)
+// Sign up at https://formspree.io, create a form, and set
+// VITE_FORMSPREE_ENDPOINT in a .env file with the endpoint URL.
+// No custom backend is used — the form POSTs directly to Formspree.
+// (Swap this block for EmailJS or a server-side mail service if needed.)
 // ---------------------------------------------------------------------
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/your-form-id";
+const FORMSPREE_ENDPOINT = import.meta.env.VITE_FORMSPREE_ENDPOINT || "";
 
 export default function Contact() {
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
@@ -22,10 +23,11 @@ export default function Contact() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (FORMSPREE_ENDPOINT.includes("your-form-id")) {
+    if (!FORMSPREE_ENDPOINT) {
       setStatus("error");
       return;
     }
+
     setStatus("sending");
     try {
       const res = await fetch(FORMSPREE_ENDPOINT, {
