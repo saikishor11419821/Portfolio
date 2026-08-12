@@ -43,13 +43,37 @@ export default function MediaModal({ item, onClose }) {
               {item.title}
             </p>
 
-            <div className="aspect-video bg-[var(--color-navy)] flex flex-col items-center justify-center gap-3 border border-[var(--color-line)]">
-              <Film size={36} strokeWidth={1} className="text-[var(--color-dim)]" />
-              <p className="font-data text-xs text-[var(--color-dim)] text-center px-6">
-                {item.media
-                  ? "Media preview"
-                  : "No capture uploaded yet — drop a video, GIF, or screenshot into /src/assets/gameplay to fill this frame."}
-              </p>
+            <div className="aspect-video bg-[var(--color-navy)] flex items-center justify-center border border-[var(--color-line)] overflow-hidden">
+              {item.media ? (
+                item.media.type === "image" ? (
+                  <img
+                    src={item.media.src}
+                    alt={item.title}
+                    className="h-full w-full object-contain"
+                  />
+                ) : item.media.type === "video" ? (
+                  <video
+                    className="h-full w-full object-contain"
+                    src={item.media.src}
+                    controls
+                    autoPlay
+                    muted
+                  />
+                ) : (
+                  <img
+                    src={item.media.src}
+                    alt={item.title}
+                    className="h-full w-full object-contain"
+                  />
+                )
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-3 p-6 text-center">
+                  <Film size={36} strokeWidth={1} className="text-[var(--color-dim)]" />
+                  <p className="font-data text-xs text-[var(--color-dim)]">
+                    No capture uploaded yet — drop a video, GIF, or screenshot into /src/assets/gameplay to fill this frame.
+                  </p>
+                </div>
+              )}
             </div>
 
             {item.description && (

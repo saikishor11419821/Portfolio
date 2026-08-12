@@ -1,11 +1,18 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Play, Code2, Car } from "lucide-react";
+import { Play, Code2, Car, ChevronLeft, ChevronRight } from "lucide-react";
 import GlowButton from "./HUD/GlowButton";
 import Reticle from "./HUD/Reticle";
 import { featuredProject } from "../data/projects";
 
 export default function FeaturedGame() {
   const p = featuredProject;
+  const [imageIndex, setImageIndex] = useState(0);
+  const gallery = Array.isArray(p.gallery) && p.gallery.length ? p.gallery : p.cover ? [p.cover] : [];
+  const imageSrc = gallery.length ? gallery[imageIndex % gallery.length] : null;
+
+  const showPrevious = () => setImageIndex((value) => (value - 1 + gallery.length) % gallery.length);
+  const showNext = () => setImageIndex((value) => (value + 1) % gallery.length);
 
   return (
     <section className="relative py-24 sm:py-32 px-5 sm:px-8">
@@ -29,6 +36,67 @@ export default function FeaturedGame() {
                 className="absolute inset-0"
                 style={{ background: "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(176,107,255,0.15), transparent 70%)" }}
               />
+              {gallery.length ? (
+              <div className="relative flex items-center justify-center w-full h-full px-4 py-6">
+                <div className="relative w-full max-w-[88%] max-h-[380px] rounded-[1.5rem] border border-[rgba(255,255,255,0.08)] bg-[#040b12]/80 shadow-[0_40px_100px_rgba(0,0,0,0.35)] overflow-hidden">
+                  <img
+                    src={imageSrc}
+                    alt={`${p.title} screenshot ${imageIndex + 1}`}
+                    className="h-full w-full object-contain bg-[#07131b]"
+                  />
+
+                  {gallery.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={showPrevious}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-[var(--color-line)] bg-[rgba(0,0,0,0.55)] p-3 text-[var(--color-cyan)] hover:bg-[rgba(0,0,0,0.7)]"
+                        aria-label="Previous image"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={showNext}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-[var(--color-line)] bg-[rgba(0,0,0,0.55)] p-3 text-[var(--color-cyan)] hover:bg-[rgba(0,0,0,0.7)]"
+                        aria-label="Next image"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    </>
+                  )}
+                </div>
+                {gallery.length > 1 && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-[rgba(0,0,0,0.5)] px-3 py-1.5 border border-[var(--color-line)]">
+                    {gallery.map((_, index) => (
+                      <span
+                        key={index}
+                        className={`block h-2 w-2 rounded-full ${index === imageIndex ? "bg-[var(--color-cyan)]" : "bg-[var(--color-line)]"}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : p.video ? (
+              <video
+                className="relative h-full w-full object-contain"
+                src={p.video}
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
+            ) : p.cover ? (
+              <div className="relative flex items-center justify-center w-full h-full px-4 py-6">
+                <div className="relative w-full max-w-[88%] max-h-[380px] rounded-[1.5rem] border border-[rgba(255,255,255,0.08)] bg-[#040b12]/80 shadow-[0_40px_100px_rgba(0,0,0,0.35)] overflow-hidden">
+                  <img
+                    src={p.cover}
+                    alt={`${p.title} cover`}
+                    className="h-full w-full object-contain bg-[#07131b]"
+                  />
+                </div>
+              </div>
+            ) : (
               <motion.div
                 animate={{ y: [0, -14, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
@@ -39,6 +107,7 @@ export default function FeaturedGame() {
                   Cover art / gameplay capture goes here
                 </span>
               </motion.div>
+            )}
               <span className="absolute top-4 left-4 font-data text-[10px] tracking-[0.2em] uppercase px-3 py-1 border border-[var(--color-good)]/50 text-[var(--color-good)]">
                 {p.status}
               </span>

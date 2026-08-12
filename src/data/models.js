@@ -22,40 +22,6 @@ export const assetCategories = [
 
 export const models = [
   {
-    id: "sedan-01",
-    name: "City Sedan",
-    category: "Vehicles",
-    software: "Blender",
-    pipeline: "Blender → FBX → Unity",
-    status: "Game Ready",
-    polyCount: null,
-    textures: null,
-    description:
-      "A drivable sedan modeled and UV-unwrapped for DriveVerse City, textured and rigged for Unity's vehicle controller.",
-    preview: null,
-    modelUrl: null,
-    wireframe: null,
-    textureSheet: null,
-    unityShot: null,
-  },
-  {
-    id: "city-block-01",
-    name: "Downtown City Block",
-    category: "Environments",
-    software: "Blender",
-    pipeline: "Blender → FBX → Unity",
-    status: "Game Ready",
-    polyCount: null,
-    textures: null,
-    description:
-      "A modular street block used to build out the open-world map — road segments, sidewalks, and props laid out for reuse.",
-    preview: null,
-    modelUrl: null,
-    wireframe: null,
-    textureSheet: null,
-    unityShot: null,
-  },
-  {
     id: "house-building-01",
     name: "Old House",
     category: "Buildings",
@@ -73,23 +39,6 @@ export const models = [
     unityShot: null,
   },
   {
-    id: "utility-helicopter-01",
-    name: "Utility Helicopter",
-    category: "Vehicles",
-    software: "Blender",
-    pipeline: "Blender → FBX → Unity",
-    status: "Game Ready",
-    polyCount: null,
-    textures: null,
-    description:
-      "A flyable helicopter with rotor rig, used for the aerial traversal mode in DriveVerse City.",
-    preview: null,
-    modelUrl: null,
-    wireframe: null,
-    textureSheet: null,
-    unityShot: null,
-  },
-  {
     id: "car-01",
     name: "Sports Car",
     category: "Vehicles",
@@ -101,58 +50,7 @@ export const models = [
     description:
       "A custom sports car imported as FBX and shown in viewport solid mode for quick preview.",
     preview: null,
-    modelUrl: "/models/Car.fbx",
-    wireframe: null,
-    textureSheet: null,
-    unityShot: null,
-  },
-  {
-    id: "street-props-01",
-    name: "Street Prop Kit",
-    category: "Props",
-    software: "Blender",
-    pipeline: "Blender → FBX → Unity",
-    status: "In Progress",
-    polyCount: null,
-    textures: null,
-    description:
-      "A kit of streetlights, signage, benches and barriers used to dress the open world.",
-    preview: null,
-    modelUrl: null,
-    wireframe: null,
-    textureSheet: null,
-    unityShot: null,
-  },
-  {
-    id: "helicopter-01",
-    name: "Utility Helicopter",
-    category: "Vehicles",
-    software: "Blender",
-    pipeline: "Blender → FBX → Unity",
-    status: "Game Ready",
-    polyCount: null,
-    textures: null,
-    description:
-      "A flyable helicopter with rotor rig, used for the aerial traversal mode in DriveVerse City.",
-    preview: null,
-    modelUrl: null,
-    wireframe: null,
-    textureSheet: null,
-    unityShot: null,
-  },
-  {
-    id: "collectible-crate",
-    name: "Mission Crate",
-    category: "Game Assets",
-    software: "Blender",
-    pipeline: "Blender → FBX → Unity",
-    status: "Game Ready",
-    polyCount: null,
-    textures: null,
-    description:
-      "A low-poly, game-ready crate used for pickup and delivery mission objectives.",
-    preview: null,
-    modelUrl: null,
+    modelUrl: "/models/Car2.fbx",
     wireframe: null,
     textureSheet: null,
     unityShot: null,
@@ -225,12 +123,25 @@ export const models = [
     textureSheet: null,
     unityShot: null,
   },
+  {
+    id: "robo-model-01",
+    name: "Robo Model",
+    category: "Characters",
+    software: "Blender",
+    pipeline: "Blender → FBX",
+    status: "Game Ready",
+    polyCount: null,
+    textures: null,
+    description:
+      "A stylized robotic character asset imported as FBX for interactive viewing and portfolio showcase.",
+    preview: null,
+    modelUrl: "/models/RoboModel2.fbx",
+    wireframe: null,
+    textureSheet: null,
+    unityShot: null,
+  },
 ];
 
-const availableModelUrls = new Set(
-  Object.keys(import.meta.glob("/public/models/*.fbx")).map((filePath) => filePath.replace("/public", ""))
-);
-
-export const visibleModels = models.filter(
-  (asset) => asset.modelUrl && availableModelUrls.has(asset.modelUrl)
-);
+// Keep every portfolio entry visible. Assets without an FBX intentionally use
+// the safe preview state in ModelViewer instead of disappearing from the vault.
+export const visibleModels = models;

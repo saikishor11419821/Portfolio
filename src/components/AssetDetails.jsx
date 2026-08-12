@@ -52,7 +52,7 @@ export default function AssetDetails({ asset, onClose }) {
                 />
 
                 <p className="font-hud text-xs tracking-[0.2em] text-[var(--color-cyan)] mt-6 mb-3">
-                  INTERACTIVE 3D VIEWER
+                  {asset.modelUrl ? "INTERACTIVE 3D VIEWER" : "ASSET PREVIEW"}
                 </p>
 
                 <div className="grid grid-cols-2 gap-3">

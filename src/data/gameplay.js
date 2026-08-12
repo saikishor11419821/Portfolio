@@ -14,7 +14,7 @@ export const gameplaySystems = [
     points: ["Walking", "Running", "Jumping", "Sliding", "Animations"],
     description:
       "A responsive third-person controller built on Unity's Character Controller and root-motion animation blending.",
-    media: null,
+    media: { type: "image", src: "/gameplay/player-movement.png" },
   },
   {
     id: "vehicle-system",
@@ -23,7 +23,7 @@ export const gameplaySystems = [
     points: ["Car driving", "Enter / Exit", "Vehicle physics", "Dynamic camera"],
     description:
       "Wheel-collider based driving physics with seamless enter/exit and a camera rig that adapts to vehicle speed.",
-    media: null,
+    media: { type: "image", src: "/gameplay/vehicle-system.png" },
   },
   {
     id: "mission-system",
@@ -32,7 +32,7 @@ export const gameplaySystems = [
     points: ["Mission start", "Objectives", "Pickup", "Drop-off", "Mission completion"],
     description:
       "A data-driven mission manager that tracks objectives, spawns targets, and rewards completion in real time.",
-    media: null,
+    media: { type: "image", src: "/gameplay/mission-system.png" },
   },
   {
     id: "gps-system",
@@ -41,7 +41,7 @@ export const gameplaySystems = [
     points: ["GPS arrow", "Mini-map", "Destination tracking"],
     description:
       "A world-space to screen-space GPS arrow paired with a live mini-map for destination tracking during missions.",
-    media: null,
+    media: { type: "image", src: "/gameplay/gps-system.png" },
   },
   {
     id: "game-economy",
@@ -50,7 +50,7 @@ export const gameplaySystems = [
     points: ["Cash", "Vehicle purchase", "Vehicle selling", "Rewards"],
     description:
       "A persistent in-game currency system tied to missions, vehicle trading, and player progression.",
-    media: null,
+    media: { type: "image", src: "/gameplay/game-economy.png" },
   },
   {
     id: "vfx",
@@ -59,6 +59,6 @@ export const gameplaySystems = [
     points: ["Fire", "Smoke", "Sparks", "Rain", "Snow", "Dust"],
     description:
       "Unity Particle System effects used to sell environmental atmosphere and gameplay feedback.",
-    media: null,
+    media: { type: "image", src: "/gameplay/vfx.png" },
   },
 ];

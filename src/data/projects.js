@@ -35,11 +35,19 @@ export const featuredProject = {
     "Player interaction",
   ],
   tech: ["Unity", "C#", "Blender", "Mixamo", "GitHub", "WebGL"],
-  playUrl: "https://unitygames.vercel.app",
+  playUrl: "https://kishor111.itch.io/drive",
   githubUrl: "https://github.com/saikishor11419821/Driveverse-City.git",
   // Drop a hero image/poster at this path, or a short capture/GIF.
-  cover: null,
+  cover: "/gameplay/player-movement.png",
   video: null,
+  gallery: [
+    "/gameplay/player-movement.png",
+    "/gameplay/vehicle-system.png",
+    "/gameplay/mission-system.png",
+    "/gameplay/gps-system.png",
+    "/gameplay/game-economy.png",
+    "/gameplay/vfx.png",
+  ],
 };
 
 export const projects = [
@@ -53,7 +61,7 @@ export const projects = [
     description:
       "An open-world driving game with taxi missions, vehicle ownership, and a live in-world economy.",
     thumbnail: null,
-    playUrl: "https://unitygames.vercel.app",
+    playUrl: "https://kishor111.itch.io/drive",
     githubUrl: "https://github.com/saikishor11419821/Driveverse-City.git",
     trailerUrl: null,
     tags: ["Unity", "C#", "Open World", "Vehicles"],

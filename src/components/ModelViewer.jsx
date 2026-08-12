@@ -1,171 +1,156 @@
-import { Suspense, useState, useEffect, Component } from "react";
+import { Component, Suspense, useCallback, useMemo, useState } from "react";
 import { Canvas, useLoader } from "@react-three/fiber";
-import { OrbitControls, Stage, useProgress, Environment } from "@react-three/drei";
-import { AlertTriangle, Move3d, Image as ImageIcon } from "lucide-react";
-import { Color, MeshStandardMaterial, ACESFilmicToneMapping, SRGBColorSpace } from "three";
+import { Environment, Grid, Html, OrbitControls, useProgress } from "@react-three/drei";
+import { Box3, Color, DoubleSide, MeshStandardMaterial, Vector3 } from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
+import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { Box, Palette, RotateCcw, Rotate3D, Scan } from "lucide-react";
 
-/** Error boundary — catches FBX parse/network failures gracefully. */
-class ViewerErrorBoundary extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { error: false };
-  }
+class ModelErrorBoundary extends Component {
+  state = { error: false };
+
   static getDerivedStateFromError() {
     return { error: true };
   }
+
   render() {
-    if (this.state.error) return this.props.fallback;
-    return this.props.children;
+    return this.state.error ? this.props.fallback : this.props.children;
   }
 }
 
-function Loader() {
+function LoadingModel() {
   const { progress } = useProgress();
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[var(--color-navy)]">
-      <div className="w-40 h-1 bg-[var(--color-line)] overflow-hidden">
-        <div
-          className="h-full bg-[var(--color-cyan)] transition-all duration-200"
-          style={{ width: `${progress}%` }}
-        />
+    <Html center>
+      <div className="font-data text-[10px] tracking-[0.18em] text-[var(--color-cyan)] whitespace-nowrap">
+        LOADING MODEL {Math.round(progress)}%
       </div>
-      <span className="font-data text-[10px] tracking-[0.2em] text-[var(--color-dim)] uppercase">
-        Loading model {Math.round(progress)}%
-      </span>
-    </div>
+    </Html>
   );
 }
 
-function ModelAsset({ url }) {
-  const asset = useLoader(FBXLoader, url);
+function Model({ url, wireframe, colorSeed }) {
+  const fbx = useLoader(FBXLoader, url);
 
-  useEffect(() => {
-    const sceneRoot = asset.scene || asset;
+  const object = useMemo(() => {
+    // Loaders cache their result. Clone it so centering and material options
+    // never mutate the cached source when a viewer is opened more than once.
+    // SkeletonUtils preserves bone bindings for rigged FBX characters such as
+    // Robo Model; Object3D.clone() can leave those meshes invisible/deformed.
+    const loaded = cloneSkinned(fbx.scene || fbx);
+    const box = new Box3().setFromObject(loaded);
+    const size = box.getSize(new Vector3());
+    const scale = 2.2 / (Math.max(size.x, size.y, size.z) || 1);
+    loaded.scale.setScalar(scale);
 
-    sceneRoot.traverse((child) => {
+    box.setFromObject(loaded);
+    loaded.position.copy(box.getCenter(new Vector3()).multiplyScalar(-1));
+    loaded.updateMatrixWorld(true);
+
+    let meshIndex = 0;
+    loaded.traverse((child) => {
       if (!child.isMesh) return;
       child.castShadow = true;
       child.receiveShadow = true;
-
-      const color = new Color();
-      color.setHSL(Math.random(), 0.55, 0.55);
-
-      child.material = new MeshStandardMaterial({
+      // Blender-style solid shading: each mesh gets a matte viewport color.
+      const hue = (colorSeed * 137.508 + meshIndex * 0.1618) % 1;
+      const tone = (colorSeed * 137.508 + meshIndex * 0.1618) % 1;
+      const lightness = tone < 0.2 ? 0.22 : tone < 0.55 ? 0.38 : 0.58;
+      const color = new Color().setHSL(hue, 0.48, lightness);
+      const materialCount = Array.isArray(child.material) ? child.material.length : 1;
+      const materials = Array.from({ length: materialCount }, () => new MeshStandardMaterial({
         color,
+        side: DoubleSide,
+        wireframe,
         flatShading: true,
-        roughness: 0.55,
         metalness: 0,
-      });
+        roughness: 0.76,
+      }));
+      child.material = Array.isArray(child.material) ? materials : materials[0];
+      meshIndex += 1;
     });
-  }, [asset]);
+    return loaded;
+  }, [fbx, wireframe, colorSeed]);
 
-  const sceneRoot = asset.scene || asset;
-  return <primitive object={sceneRoot} />;
+  return <primitive object={object} />;
 }
 
-function StaticFallback({ preview, name }) {
+function StaticFallback({ preview, name, message }) {
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[var(--color-navy)] text-[var(--color-dim)]">
-      {preview ? (
-        <img src={preview} alt={name} className="w-full h-full object-cover" />
-      ) : (
-        <>
-          <ImageIcon size={40} strokeWidth={1} />
-          <span className="font-data text-[10px] tracking-[0.15em] uppercase px-6 text-center">
-            No interactive model yet — showing render placeholder for {name}
-          </span>
-        </>
-      )}
-    </div>
-  );
-}
-
-function LoadFailed({ name }) {
-  return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[var(--color-navy)] text-[var(--color-danger)]">
-      <AlertTriangle size={32} strokeWidth={1.5} />
-      <span className="font-data text-[10px] tracking-[0.15em] uppercase px-6 text-center">
-        Failed to load model for {name}
-      </span>
-    </div>
-  );
-}
-
-/**
- * ModelViewer — drag to rotate, scroll to zoom, pinch/pan supported.
- * Falls back to a static render (or a labeled placeholder) whenever
- * `modelUrl` is empty, and to an error state if the fetch/parse fails.
- */
-export default function ModelViewer({ modelUrl, preview, name = "Asset", className = "" }) {
-  const [failed, setFailed] = useState(false);
-
-  if (!modelUrl || failed) {
-    return (
-      <div className={`relative overflow-hidden ${className}`}>
-        {failed ? <LoadFailed name={name} /> : <StaticFallback preview={preview} name={name} />}
+    <div className="relative w-full h-full min-h-[240px] flex items-center justify-center overflow-hidden bg-[var(--color-navy)]">
+      {preview && <img src={preview} alt={`${name} preview`} className="absolute inset-0 w-full h-full object-cover opacity-70" />}
+      <div className="absolute inset-0 bg-grid opacity-30" />
+      <div className="relative flex flex-col items-center gap-3 text-center px-6">
+        <Box size={38} strokeWidth={1} className="text-[var(--color-cyan)]" />
+        <span className="font-data text-[10px] tracking-[0.16em] uppercase text-[var(--color-muted)]">{message}</span>
       </div>
-    );
+    </div>
+  );
+}
+
+export default function ModelViewer({ modelUrl, preview, name = "3D asset", className = "", ...rest }) {
+  const [wireframe, setWireframe] = useState(false);
+  const [autoRotate, setAutoRotate] = useState(false);
+  const [resetVersion, setResetVersion] = useState(0);
+  const [colorSeed, setColorSeed] = useState(() => Math.random());
+
+  const handleContextLost = useCallback((event) => {
+    event.preventDefault();
+    setResetVersion((value) => value + 1);
+  }, []);
+
+  if (!modelUrl) {
+    return <StaticFallback preview={preview} name={name} message="Interactive model coming soon" />;
   }
 
-  return (
-    <div className={`relative overflow-hidden ${className}`}>
-      <ViewerErrorBoundary fallback={<LoadFailed name={name} />}>
-        <Suspense fallback={<Loader />}>
-          <Canvas
-            dpr={[1, 1.6]}
-            camera={{ position: [4, 2.8, 5], fov: 40 }}
-            onError={() => setFailed(true)}
-            shadows
-            gl={{ antialias: true, toneMapping: ACESFilmicToneMapping, outputEncoding: SRGBColorSpace }}
-          >
-            <color attach="background" args={[0x121827]} />
-            <ambientLight intensity={0.08} />
-            <hemisphereLight skyColor={0xffffff} groundColor={0x111111} intensity={0.16} />
-            <directionalLight
-              position={[4, 7, 4]}
-              intensity={0.65}
-              castShadow
-              shadow-mapSize-width={2048}
-              shadow-mapSize-height={2048}
-              shadow-bias={-0.0005}
-            />
-            <directionalLight position={[-2.5, 2.8, -4]} intensity={0.14} />
-            <spotLight
-              position={[0, 5, 7]}
-              intensity={0.18}
-              angle={0.42}
-              penumbra={0.7}
-              castShadow
-            />
-            <pointLight position={[0, 1.8, 2]} intensity={0.08} />
-            <Stage preset="rembrandt" intensity={0.6} shadows="contact">
-              <ModelAsset url={modelUrl} />
-            </Stage>
-            <Environment preset="studio" background={false} blur={0.3} />
-            <OrbitControls
-              makeDefault
-              enablePan
-              enableZoom
-              autoRotate
-              autoRotateSpeed={0.6}
-              minDistance={1.5}
-              maxDistance={10}
-            />
-          </Canvas>
-        </Suspense>
-      </ViewerErrorBoundary>
+  const fallback = <StaticFallback preview={preview} name={name} message="Model preview unavailable" />;
 
-      <div className="absolute bottom-3 left-3 flex items-center gap-1.5 font-data text-[10px] tracking-[0.1em] uppercase text-[var(--color-dim)] bg-[var(--color-void)]/70 px-2.5 py-1 pointer-events-none">
-        <Move3d size={12} /> Drag to rotate · Scroll to zoom
+  return (
+    <div className={`relative w-full h-full overflow-hidden bg-[#07131b] ${className}`} {...rest}>
+      <ModelErrorBoundary key={modelUrl} fallback={fallback}>
+        <Canvas
+          key={resetVersion}
+          shadows
+          dpr={[1, 2]}
+          camera={{ position: [3.4, 2.3, 3.4], fov: 42, near: 0.1, far: 100 }}
+          gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+          onCreated={({ gl }) => {
+            gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            gl.domElement.addEventListener("webglcontextlost", handleContextLost, false);
+          }}
+        >
+          <color attach="background" args={["#07131b"]} />
+          <fog attach="fog" args={["#07131b", 7, 16]} />
+          <ambientLight intensity={0.55} />
+          <hemisphereLight intensity={0.55} skyColor="#b8eeff" groundColor="#061018" />
+          <directionalLight position={[4, 7, 4]} intensity={2.1} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
+          <directionalLight position={[-4, 2, -3]} intensity={0.7} color="#2ce7ff" />
+          <Grid position={[0, -1.18, 0]} args={[10, 10]} cellSize={0.5} cellThickness={0.5} sectionSize={2} sectionThickness={1} cellColor="#174253" sectionColor="#00d9ff" fadeDistance={10} fadeStrength={1.5} infiniteGrid />
+          <Environment preset="city" />
+          <Suspense fallback={<LoadingModel />}>
+            <Model url={modelUrl} wireframe={wireframe} colorSeed={colorSeed} />
+          </Suspense>
+          <OrbitControls key={resetVersion} makeDefault enableDamping dampingFactor={0.08} autoRotate={autoRotate} autoRotateSpeed={1.2} minDistance={2.2} maxDistance={7} maxPolarAngle={Math.PI * 0.88} />
+        </Canvas>
+      </ModelErrorBoundary>
+
+      <div className="absolute top-3 left-3 pointer-events-none flex items-center gap-2 font-data text-[9px] tracking-[0.16em] uppercase text-[var(--color-cyan)]">
+        <Scan size={14} /> Interactive viewport
+      </div>
+      <div className="absolute right-3 bottom-3 flex gap-1.5">
+        <button type="button" onClick={() => setWireframe((value) => !value)} className={`p-2 border transition-colors ${wireframe ? "border-[var(--color-cyan)] text-[var(--color-cyan)] bg-[var(--color-cyan)]/10" : "border-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-cyan)]"}`} aria-label="Toggle wireframe" title="Toggle wireframe">
+          <Rotate3D size={15} />
+        </button>
+        <button type="button" onClick={() => setAutoRotate((value) => !value)} className={`px-2 font-data text-[9px] tracking-wider border transition-colors ${autoRotate ? "border-[var(--color-cyan)] text-[var(--color-cyan)] bg-[var(--color-cyan)]/10" : "border-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-cyan)]"}`} aria-label="Toggle auto rotate">
+          AUTO
+        </button>
+        <button type="button" onClick={() => setColorSeed(Math.random())} className="p-2 border border-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-cyan)] transition-colors" aria-label="Randomize solid viewport colors" title="Randomize colors">
+          <Palette size={15} />
+        </button>
+        <button type="button" onClick={() => setResetVersion((value) => value + 1)} className="p-2 border border-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-cyan)] transition-colors" aria-label="Reset camera" title="Reset camera">
+          <RotateCcw size={15} />
+        </button>
       </div>
     </div>
   );
-}
-
-export function preloadModel(url) {
-  if (!url) return;
-
-  const loader = new FBXLoader();
-  loader.load(url);
 }
