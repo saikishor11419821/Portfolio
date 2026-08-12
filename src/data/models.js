@@ -33,7 +33,7 @@ export const models = [
     description:
       "A detailed residential building asset created for environment concepting and level dressing, ready to be placed in architectural scenes.",
     preview: null,
-    modelUrl: "/models/house.fbx",
+    modelUrl: "/models/house2.fbx",
     wireframe: null,
     textureSheet: null,
     unityShot: null,
