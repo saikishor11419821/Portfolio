@@ -6,6 +6,30 @@ import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { Box, Palette, RotateCcw, Rotate3D, Scan } from "lucide-react";
 
+// The supplied FBX assets include a legacy glossiness texture connection.
+// The viewer replaces all imported materials below, so this skipped connection
+// cannot affect the rendered model. Filter only that known, harmless loader warning.
+class PortfolioFBXLoader extends FBXLoader {
+  parse(buffer, path) {
+    const originalWarn = console.warn;
+    console.warn = (...args) => {
+      if (
+        args[0] === "THREE.FBXLoader: %s map is not supported in three.js, skipping texture."
+        && args[1] === "ShininessExponent"
+      ) {
+        return;
+      }
+      originalWarn.apply(console, args);
+    };
+
+    try {
+      return super.parse(buffer, path);
+    } finally {
+      console.warn = originalWarn;
+    }
+  }
+}
+
 class ModelErrorBoundary extends Component {
   state = { error: false };
 
@@ -30,7 +54,7 @@ function LoadingModel() {
 }
 
 function Model({ url, wireframe, colorSeed }) {
-  const fbx = useLoader(FBXLoader, url);
+  const fbx = useLoader(PortfolioFBXLoader, url);
 
   const object = useMemo(() => {
     // Loaders cache their result. Clone it so centering and material options
@@ -110,7 +134,7 @@ export default function ModelViewer({ modelUrl, preview, name = "3D asset", clas
       <ModelErrorBoundary key={modelUrl} fallback={fallback}>
         <Canvas
           key={resetVersion}
-          shadows
+          shadows="percentage"
           dpr={[1, 2]}
           camera={{ position: [3.4, 2.3, 3.4], fov: 42, near: 0.1, far: 100 }}
           gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
