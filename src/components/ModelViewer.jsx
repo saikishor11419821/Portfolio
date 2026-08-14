@@ -1,14 +1,14 @@
-import { Component, Suspense, useCallback, useMemo, useState } from "react";
-import { Canvas, useLoader } from "@react-three/fiber";
-import { Environment, Grid, Html, OrbitControls, useProgress } from "@react-three/drei";
-import { Box3, DoubleSide, MeshStandardMaterial, Vector3 } from "three";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
+import { Environment, Grid, OrbitControls } from "@react-three/drei";
+import { Box3, Color, DoubleSide, MeshStandardMaterial, Vector3 } from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { Box, RotateCcw, Rotate3D, Scan } from "lucide-react";
+import { Box, Palette, RotateCcw, Rotate3D, Scan } from "lucide-react";
 
 // The supplied FBX assets include a legacy glossiness texture connection.
-// Three.js does not support that legacy map, but all supported material maps
-// stay intact. Filter only that known, harmless loader warning.
+// The viewer replaces all imported materials below, so this skipped connection
+// cannot affect the rendered model. Filter only that known, harmless loader warning.
 class PortfolioFBXLoader extends FBXLoader {
   parse(buffer, path) {
     const originalWarn = console.warn;
@@ -30,38 +30,45 @@ class PortfolioFBXLoader extends FBXLoader {
   }
 }
 
-class ModelErrorBoundary extends Component {
-  state = { error: false };
+const MODEL_CACHE_LIMIT = 4;
+const modelCache = new Map();
 
-  static getDerivedStateFromError() {
-    return { error: true };
-  }
-
-  render() {
-    return this.state.error ? this.props.fallback : this.props.children;
-  }
+function disposeMaterial(material) {
+  if (!material) return;
+  Object.values(material).forEach((value) => {
+    if (value?.isTexture) value.dispose();
+  });
+  material.dispose?.();
 }
 
-function LoadingModel() {
-  const { progress } = useProgress();
-  return (
-    <Html center>
-      <div className="font-data text-[10px] tracking-[0.18em] text-[var(--color-cyan)] whitespace-nowrap">
-        LOADING MODEL {Math.round(progress)}%
-      </div>
-    </Html>
-  );
+function disposeObject(object) {
+  object.traverse((child) => {
+    if (!child.isMesh) return;
+    child.geometry?.dispose();
+    (Array.isArray(child.material) ? child.material : [child.material]).forEach(disposeMaterial);
+    child.material = null;
+    child.geometry = null;
+  });
+  object.removeFromParent();
 }
 
-function Model({ url, wireframe }) {
-  const fbx = useLoader(PortfolioFBXLoader, url);
+function cacheModel(url, source) {
+  modelCache.set(url, source);
+  if (modelCache.size <= MODEL_CACHE_LIMIT) return;
+  const [oldestUrl, oldest] = modelCache.entries().next().value;
+  modelCache.delete(oldestUrl);
+  disposeObject(oldest.scene || oldest);
+}
 
-  const object = useMemo(() => {
-    // Loaders cache their result. Clone it so centering and material options
-    // never mutate the cached source when a viewer is opened more than once.
-    // SkeletonUtils preserves bone bindings for rigged FBX characters such as
-    // Robo Model; Object3D.clone() can leave those meshes invisible/deformed.
-    const loaded = cloneSkinned(fbx.scene || fbx);
+function createModelInstance(source, wireframe, colorSeed) {
+  // Cache the parsed FBX, but give each displayed instance its own geometry
+  // and materials. That makes cleanup safe without invalidating the cache.
+  const loaded = cloneSkinned(source.scene || source);
+  loaded.traverse((child) => {
+    if (!child.isMesh) return;
+    child.geometry = child.geometry.clone();
+  });
+
     const box = new Box3().setFromObject(loaded);
     const size = box.getSize(new Vector3());
     const scale = 2.2 / (Math.max(size.x, size.y, size.z) || 1);
@@ -71,28 +78,87 @@ function Model({ url, wireframe }) {
     loaded.position.copy(box.getCenter(new Vector3()).multiplyScalar(-1));
     loaded.updateMatrixWorld(true);
 
+    let meshIndex = 0;
     loaded.traverse((child) => {
       if (!child.isMesh) return;
       child.castShadow = true;
       child.receiveShadow = true;
-      // Keep the FBX's exported materials and texture maps. The previous
-      // viewer replaced them with random flat colors, so deployed models
-      // could not render as they do in Blender/Unity.
-      const prepareMaterial = (source) => {
-        const material = source?.clone?.() || new MeshStandardMaterial({ color: "#b8eeff" });
-        material.side = DoubleSide;
-        material.wireframe = wireframe;
-        material.needsUpdate = true;
-        return material;
-      };
-      child.material = Array.isArray(child.material)
-        ? child.material.map(prepareMaterial)
-        : prepareMaterial(child.material);
+      // Blender-style solid shading: each mesh gets a matte viewport color.
+      const hue = (colorSeed * 137.508 + meshIndex * 0.1618) % 1;
+      const tone = (colorSeed * 137.508 + meshIndex * 0.1618) % 1;
+      const lightness = tone < 0.2 ? 0.22 : tone < 0.55 ? 0.38 : 0.58;
+      const color = new Color().setHSL(hue, 0.48, lightness);
+      const materialCount = Array.isArray(child.material) ? child.material.length : 1;
+      const materials = Array.from({ length: materialCount }, () => new MeshStandardMaterial({
+        color,
+        side: DoubleSide,
+        wireframe,
+        flatShading: true,
+        metalness: 0,
+        roughness: 0.76,
+      }));
+      child.material = Array.isArray(child.material) ? materials : materials[0];
+      meshIndex += 1;
     });
-    return loaded;
-  }, [fbx, wireframe]);
+  return loaded;
+}
 
-  return <primitive object={object} />;
+function ModelManager({ url, wireframe, colorSeed, onLoadingChange, onError }) {
+  const { scene, invalidate } = useThree();
+  const activeModelRef = useRef(null);
+  const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    const requestId = ++requestIdRef.current;
+    let cancelled = false;
+
+    const replaceModel = (source) => {
+      if (cancelled || requestId !== requestIdRef.current) return;
+      const nextModel = createModelInstance(source, wireframe, colorSeed);
+      if (activeModelRef.current) disposeObject(activeModelRef.current);
+      activeModelRef.current = nextModel;
+      scene.add(nextModel);
+      onLoadingChange(false);
+      invalidate();
+    };
+
+    const cached = modelCache.get(url);
+    if (cached) {
+      onLoadingChange(false);
+      replaceModel(cached);
+    } else {
+      onLoadingChange(true);
+      const loader = new PortfolioFBXLoader();
+      loader.load(
+        url,
+        (source) => {
+          if (cancelled || requestId !== requestIdRef.current) {
+            disposeObject(source.scene || source);
+            return;
+          }
+          cacheModel(url, source);
+          replaceModel(source);
+        },
+        undefined,
+        (error) => {
+          if (cancelled || requestId !== requestIdRef.current) return;
+          console.error("Failed to load FBX model:", error);
+          onLoadingChange(false);
+          onError();
+        }
+      );
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [colorSeed, invalidate, onError, onLoadingChange, scene, url, wireframe]);
+
+  useEffect(() => () => {
+    if (activeModelRef.current) disposeObject(activeModelRef.current);
+  }, []);
+
+  return null;
 }
 
 function StaticFallback({ preview, name, message }) {
@@ -111,47 +177,47 @@ function StaticFallback({ preview, name, message }) {
 export default function ModelViewer({ modelUrl, preview, name = "3D asset", className = "", ...rest }) {
   const [wireframe, setWireframe] = useState(false);
   const [autoRotate, setAutoRotate] = useState(false);
-  const [resetVersion, setResetVersion] = useState(0);
+  const [colorSeed, setColorSeed] = useState(() => Math.random());
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const controlsRef = useRef(null);
+  const handleModelError = useCallback(() => setHasError(true), []);
 
-  const handleContextLost = useCallback((event) => {
-    event.preventDefault();
-    setResetVersion((value) => value + 1);
-  }, []);
+  const resetCamera = () => controlsRef.current?.reset();
+
+  useEffect(() => setHasError(false), [modelUrl]);
 
   if (!modelUrl) {
     return <StaticFallback preview={preview} name={name} message="Interactive model coming soon" />;
   }
 
-  const fallback = <StaticFallback preview={preview} name={name} message="Model preview unavailable" />;
-
   return (
     <div className={`relative w-full h-full overflow-hidden bg-[#07131b] ${className}`} {...rest}>
-      <ModelErrorBoundary key={modelUrl} fallback={fallback}>
-        <Canvas
-          key={resetVersion}
-          shadows="percentage"
-          dpr={[1, 2]}
-          camera={{ position: [3.4, 2.3, 3.4], fov: 42, near: 0.1, far: 100 }}
-          gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
-          onCreated={({ gl }) => {
-            gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            gl.domElement.addEventListener("webglcontextlost", handleContextLost, false);
-          }}
-        >
-          <color attach="background" args={["#07131b"]} />
-          <fog attach="fog" args={["#07131b", 7, 16]} />
-          <ambientLight intensity={0.55} />
-          <hemisphereLight intensity={0.55} skyColor="#b8eeff" groundColor="#061018" />
-          <directionalLight position={[4, 7, 4]} intensity={2.1} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
-          <directionalLight position={[-4, 2, -3]} intensity={0.7} color="#2ce7ff" />
-          <Grid position={[0, -1.18, 0]} args={[10, 10]} cellSize={0.5} cellThickness={0.5} sectionSize={2} sectionThickness={1} cellColor="#174253" sectionColor="#00d9ff" fadeDistance={10} fadeStrength={1.5} infiniteGrid />
-          <Environment preset="city" />
-          <Suspense fallback={<LoadingModel />}>
-            <Model url={modelUrl} wireframe={wireframe} />
-          </Suspense>
-          <OrbitControls key={resetVersion} makeDefault enableDamping dampingFactor={0.08} autoRotate={autoRotate} autoRotateSpeed={1.2} minDistance={2.2} maxDistance={7} maxPolarAngle={Math.PI * 0.88} />
-        </Canvas>
-      </ModelErrorBoundary>
+      <Canvas
+        shadows="percentage"
+        dpr={[1, 2]}
+        camera={{ position: [3.4, 2.3, 3.4], fov: 42, near: 0.1, far: 100 }}
+        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+      >
+        <color attach="background" args={["#07131b"]} />
+        <fog attach="fog" args={["#07131b", 7, 16]} />
+        <ambientLight intensity={0.55} />
+        <hemisphereLight intensity={0.55} skyColor="#b8eeff" groundColor="#061018" />
+        <directionalLight position={[4, 7, 4]} intensity={2.1} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
+        <directionalLight position={[-4, 2, -3]} intensity={0.7} color="#2ce7ff" />
+        <Grid position={[0, -1.18, 0]} args={[10, 10]} cellSize={0.5} cellThickness={0.5} sectionSize={2} sectionThickness={1} cellColor="#174253" sectionColor="#00d9ff" fadeDistance={10} fadeStrength={1.5} infiniteGrid />
+        <Environment preset="city" />
+        <ModelManager url={modelUrl} wireframe={wireframe} colorSeed={colorSeed} onLoadingChange={setIsLoading} onError={handleModelError} />
+        <OrbitControls ref={controlsRef} makeDefault enableDamping dampingFactor={0.08} autoRotate={autoRotate} autoRotateSpeed={1.2} minDistance={2.2} maxDistance={7} maxPolarAngle={Math.PI * 0.88} />
+      </Canvas>
+
+      {(isLoading || hasError) && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="font-data text-[10px] tracking-[0.18em] text-[var(--color-cyan)] whitespace-nowrap">
+            {hasError ? "MODEL PREVIEW UNAVAILABLE" : "LOADING MODEL"}
+          </div>
+        </div>
+      )}
 
       <div className="absolute top-3 left-3 pointer-events-none flex items-center gap-2 font-data text-[9px] tracking-[0.16em] uppercase text-[var(--color-cyan)]">
         <Scan size={14} /> Interactive viewport
@@ -163,7 +229,10 @@ export default function ModelViewer({ modelUrl, preview, name = "3D asset", clas
         <button type="button" onClick={() => setAutoRotate((value) => !value)} className={`px-2 font-data text-[9px] tracking-wider border transition-colors ${autoRotate ? "border-[var(--color-cyan)] text-[var(--color-cyan)] bg-[var(--color-cyan)]/10" : "border-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-cyan)]"}`} aria-label="Toggle auto rotate">
           AUTO
         </button>
-        <button type="button" onClick={() => setResetVersion((value) => value + 1)} className="p-2 border border-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-cyan)] transition-colors" aria-label="Reset camera" title="Reset camera">
+        <button type="button" onClick={() => setColorSeed(Math.random())} className="p-2 border border-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-cyan)] transition-colors" aria-label="Randomize solid viewport colors" title="Randomize colors">
+          <Palette size={15} />
+        </button>
+        <button type="button" onClick={resetCamera} className="p-2 border border-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-cyan)] transition-colors" aria-label="Reset camera" title="Reset camera">
           <RotateCcw size={15} />
         </button>
       </div>
