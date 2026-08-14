@@ -1,14 +1,14 @@
 import { Component, Suspense, useCallback, useMemo, useState } from "react";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { Environment, Grid, Html, OrbitControls, useProgress } from "@react-three/drei";
-import { Box3, Color, DoubleSide, MeshStandardMaterial, Vector3 } from "three";
+import { Box3, DoubleSide, MeshStandardMaterial, Vector3 } from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { Box, Palette, RotateCcw, Rotate3D, Scan } from "lucide-react";
+import { Box, RotateCcw, Rotate3D, Scan } from "lucide-react";
 
 // The supplied FBX assets include a legacy glossiness texture connection.
-// The viewer replaces all imported materials below, so this skipped connection
-// cannot affect the rendered model. Filter only that known, harmless loader warning.
+// Three.js does not support that legacy map, but all supported material maps
+// stay intact. Filter only that known, harmless loader warning.
 class PortfolioFBXLoader extends FBXLoader {
   parse(buffer, path) {
     const originalWarn = console.warn;
@@ -53,7 +53,7 @@ function LoadingModel() {
   );
 }
 
-function Model({ url, wireframe, colorSeed }) {
+function Model({ url, wireframe }) {
   const fbx = useLoader(PortfolioFBXLoader, url);
 
   const object = useMemo(() => {
@@ -71,30 +71,26 @@ function Model({ url, wireframe, colorSeed }) {
     loaded.position.copy(box.getCenter(new Vector3()).multiplyScalar(-1));
     loaded.updateMatrixWorld(true);
 
-    let meshIndex = 0;
     loaded.traverse((child) => {
       if (!child.isMesh) return;
       child.castShadow = true;
       child.receiveShadow = true;
-      // Blender-style solid shading: each mesh gets a matte viewport color.
-      const hue = (colorSeed * 137.508 + meshIndex * 0.1618) % 1;
-      const tone = (colorSeed * 137.508 + meshIndex * 0.1618) % 1;
-      const lightness = tone < 0.2 ? 0.22 : tone < 0.55 ? 0.38 : 0.58;
-      const color = new Color().setHSL(hue, 0.48, lightness);
-      const materialCount = Array.isArray(child.material) ? child.material.length : 1;
-      const materials = Array.from({ length: materialCount }, () => new MeshStandardMaterial({
-        color,
-        side: DoubleSide,
-        wireframe,
-        flatShading: true,
-        metalness: 0,
-        roughness: 0.76,
-      }));
-      child.material = Array.isArray(child.material) ? materials : materials[0];
-      meshIndex += 1;
+      // Keep the FBX's exported materials and texture maps. The previous
+      // viewer replaced them with random flat colors, so deployed models
+      // could not render as they do in Blender/Unity.
+      const prepareMaterial = (source) => {
+        const material = source?.clone?.() || new MeshStandardMaterial({ color: "#b8eeff" });
+        material.side = DoubleSide;
+        material.wireframe = wireframe;
+        material.needsUpdate = true;
+        return material;
+      };
+      child.material = Array.isArray(child.material)
+        ? child.material.map(prepareMaterial)
+        : prepareMaterial(child.material);
     });
     return loaded;
-  }, [fbx, wireframe, colorSeed]);
+  }, [fbx, wireframe]);
 
   return <primitive object={object} />;
 }
@@ -116,7 +112,6 @@ export default function ModelViewer({ modelUrl, preview, name = "3D asset", clas
   const [wireframe, setWireframe] = useState(false);
   const [autoRotate, setAutoRotate] = useState(false);
   const [resetVersion, setResetVersion] = useState(0);
-  const [colorSeed, setColorSeed] = useState(() => Math.random());
 
   const handleContextLost = useCallback((event) => {
     event.preventDefault();
@@ -152,7 +147,7 @@ export default function ModelViewer({ modelUrl, preview, name = "3D asset", clas
           <Grid position={[0, -1.18, 0]} args={[10, 10]} cellSize={0.5} cellThickness={0.5} sectionSize={2} sectionThickness={1} cellColor="#174253" sectionColor="#00d9ff" fadeDistance={10} fadeStrength={1.5} infiniteGrid />
           <Environment preset="city" />
           <Suspense fallback={<LoadingModel />}>
-            <Model url={modelUrl} wireframe={wireframe} colorSeed={colorSeed} />
+            <Model url={modelUrl} wireframe={wireframe} />
           </Suspense>
           <OrbitControls key={resetVersion} makeDefault enableDamping dampingFactor={0.08} autoRotate={autoRotate} autoRotateSpeed={1.2} minDistance={2.2} maxDistance={7} maxPolarAngle={Math.PI * 0.88} />
         </Canvas>
@@ -167,9 +162,6 @@ export default function ModelViewer({ modelUrl, preview, name = "3D asset", clas
         </button>
         <button type="button" onClick={() => setAutoRotate((value) => !value)} className={`px-2 font-data text-[9px] tracking-wider border transition-colors ${autoRotate ? "border-[var(--color-cyan)] text-[var(--color-cyan)] bg-[var(--color-cyan)]/10" : "border-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-cyan)]"}`} aria-label="Toggle auto rotate">
           AUTO
-        </button>
-        <button type="button" onClick={() => setColorSeed(Math.random())} className="p-2 border border-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-cyan)] transition-colors" aria-label="Randomize solid viewport colors" title="Randomize colors">
-          <Palette size={15} />
         </button>
         <button type="button" onClick={() => setResetVersion((value) => value + 1)} className="p-2 border border-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-cyan)] transition-colors" aria-label="Reset camera" title="Reset camera">
           <RotateCcw size={15} />

@@ -31,6 +31,17 @@ npm run build
 npm run preview
 ```
 
+## Deploy to Render
+
+This repository includes `render.yaml` for a Render **Static Site**. Push the
+project to GitHub, then in Render choose **New +** → **Blueprint** and select
+the repository. Render will install dependencies, run `npm run build`, publish
+`dist`, and rewrite client-side routes to `index.html`.
+
+The FBX files and their texture folders must remain in `public/models/` with
+their exact filename casing. Render runs on Linux, so `Car2.fbx` and
+`car2.fbx` are different files.
+
 ---
 
 ## 3. How to add a Unity project

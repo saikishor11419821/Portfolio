@@ -20,6 +20,10 @@ export const assetCategories = [
   "Other",
 ];
 
+// Public files are emitted to the site's base URL. This works on Render and
+// also if the site is later hosted below a subdirectory.
+const modelAsset = (file) => `${import.meta.env.BASE_URL}models/${file}`;
+
 export const models = [
   {
     id: "house-building-01",
@@ -33,7 +37,7 @@ export const models = [
     description:
       "A detailed residential building asset created for environment concepting and level dressing, ready to be placed in architectural scenes.",
     preview: null,
-    modelUrl: "/models/house2.fbx",
+    modelUrl: modelAsset("house2.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
@@ -48,9 +52,9 @@ export const models = [
     polyCount: null,
     textures: null,
     description:
-      "A custom sports car imported as FBX and shown in viewport solid mode for quick preview.",
+      "A custom sports car imported as FBX with its exported materials for an interactive preview.",
     preview: null,
-    modelUrl: "/models/Car2.fbx",
+    modelUrl: modelAsset("Car2.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
@@ -67,7 +71,7 @@ export const models = [
     description:
       "A stylized sword asset exported from Blender for use in props, combat scenes, and fantasy environments.",
     preview: null,
-    modelUrl: "/models/Sword.fbx",
+    modelUrl: modelAsset("Sword.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
@@ -84,7 +88,7 @@ export const models = [
     description:
       "A detailed stone well environment asset suitable for medieval ruins, village scenes, and exploration-focused levels.",
     preview: null,
-    modelUrl: "/models/Old_Well.fbx",
+    modelUrl: modelAsset("Old_Well.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
@@ -101,7 +105,7 @@ export const models = [
     description:
       "A modular door prop crafted for fantasy interiors, dungeon scenes, and interactive environment storytelling.",
     preview: null,
-    modelUrl: "/models/Door.fbx",
+    modelUrl: modelAsset("Door.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
@@ -118,7 +122,7 @@ export const models = [
     description:
       "A collectible key prop designed for puzzles, quests, and object interaction systems in game levels.",
     preview: null,
-    modelUrl: "/models/Key.fbx",
+    modelUrl: modelAsset("Key.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
@@ -135,7 +139,7 @@ export const models = [
     description:
       "A stylized robotic character asset imported as FBX for interactive viewing and portfolio showcase.",
     preview: null,
-    modelUrl: "/models/RoboModel2.fbx",
+    modelUrl: modelAsset("RoboModel2.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
