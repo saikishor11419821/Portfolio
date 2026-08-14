@@ -6,6 +6,7 @@ import tailwindcss from '@tailwindcss/vite'
 const projectRoot = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
+  base: '/3d-model-viewer/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: [

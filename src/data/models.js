@@ -1,4 +1,4 @@
-// 3D ASSET VAULT DATA
+﻿// 3D ASSET VAULT DATA
 // To add a new Blender model, push one object into this array.
 // AssetVault.jsx, AssetCard.jsx and AssetDetails.jsx render entirely
 // from this data.
@@ -8,6 +8,8 @@
 //           Leave null to fall back to the preview render.
 // preview: path/URL to a still render, used as the card image and as the
 //          fallback when no interactive model is supplied.
+
+const modelAssetPath = (fileName) => `${import.meta.env.BASE_URL}models/${fileName}`;
 
 export const assetCategories = [
   "All",
@@ -33,7 +35,7 @@ export const models = [
     description:
       "A detailed residential building asset created for environment concepting and level dressing, ready to be placed in architectural scenes.",
     preview: null,
-    modelUrl: "/models/house2.fbx",
+    modelUrl: modelAssetPath("house2.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
@@ -50,7 +52,7 @@ export const models = [
     description:
       "A custom sports car imported as FBX and shown in viewport solid mode for quick preview.",
     preview: null,
-    modelUrl: "/models/Car2.fbx",
+    modelUrl: modelAssetPath("Car2.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
@@ -67,7 +69,7 @@ export const models = [
     description:
       "A stylized sword asset exported from Blender for use in props, combat scenes, and fantasy environments.",
     preview: null,
-    modelUrl: "/models/Sword.fbx",
+    modelUrl: modelAssetPath("Sword.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
@@ -84,7 +86,7 @@ export const models = [
     description:
       "A detailed stone well environment asset suitable for medieval ruins, village scenes, and exploration-focused levels.",
     preview: null,
-    modelUrl: "/models/Old_Well.fbx",
+    modelUrl: modelAssetPath("Old_Well.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
@@ -101,7 +103,7 @@ export const models = [
     description:
       "A modular door prop crafted for fantasy interiors, dungeon scenes, and interactive environment storytelling.",
     preview: null,
-    modelUrl: "/models/Door.fbx",
+    modelUrl: modelAssetPath("Door.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
@@ -118,7 +120,7 @@ export const models = [
     description:
       "A collectible key prop designed for puzzles, quests, and object interaction systems in game levels.",
     preview: null,
-    modelUrl: "/models/Key.fbx",
+    modelUrl: modelAssetPath("Key.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
@@ -135,7 +137,7 @@ export const models = [
     description:
       "A stylized robotic character asset imported as FBX for interactive viewing and portfolio showcase.",
     preview: null,
-    modelUrl: "/models/RoboModel2.fbx",
+    modelUrl: modelAssetPath("RoboModel2.fbx"),
     wireframe: null,
     textureSheet: null,
     unityShot: null,
