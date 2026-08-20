@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowLeft, Download, Layers, Grid3x3 } from "lucide-react";
+import { X, ArrowLeft, Download } from "lucide-react";
 import ModelViewer from "./ModelViewer";
+import GlowButton from "./HUD/GlowButton";
 
 export default function AssetDetails({ asset, onClose }) {
   useEffect(() => {
@@ -29,58 +30,55 @@ export default function AssetDetails({ asset, onClose }) {
           <div className="relative max-w-6xl mx-auto px-5 sm:px-8 py-8">
             <button
               onClick={onClose}
-              className="flex items-center gap-2 font-data text-xs tracking-[0.15em] uppercase text-[var(--color-muted)] hover:text-[var(--color-cyan)] mb-8"
+              className="flex items-center gap-2 font-data text-xs tracking-[0.15em] uppercase text-[var(--color-muted)] hover:text-[var(--color-cyan)] mb-8 transition-colors"
             >
               <ArrowLeft size={16} /> Back to Vault
             </button>
 
             <button
               onClick={onClose}
-              className="absolute top-8 right-5 sm:right-8 p-2 text-[var(--color-muted)] hover:text-[var(--color-cyan)]"
+              className="absolute top-8 right-5 sm:right-8 p-2 text-[var(--color-muted)] hover:text-[var(--color-cyan)] transition-colors"
               aria-label="Close"
             >
               <X size={22} />
             </button>
 
-            <div className="grid lg:grid-cols-[1.3fr_1fr] gap-8">
+            <div className="grid lg:grid-cols-[1.35fr_1fr] gap-8 items-start">
               <div>
                 <ModelViewer
                   modelUrl={asset.modelUrl}
                   preview={asset.preview}
                   name={asset.name}
-                  className="h-[320px] sm:h-[420px] border border-[var(--color-line)] clip-corner"
+                  className="h-[360px] sm:h-[460px] border border-[var(--color-line)] clip-corner shadow-2xl"
                 />
 
-                <p className="font-hud text-xs tracking-[0.2em] text-[var(--color-cyan)] mt-6 mb-3">
-                  {asset.modelUrl ? "INTERACTIVE 3D VIEWER" : "ASSET PREVIEW"}
-                </p>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    ["Wireframe", asset.wireframe, Grid3x3],
-                    ["In Unity", asset.unityShot, Layers],
-                  ].map(([label, src, Icon]) => (
-                    <div key={label} className="panel clip-corner aspect-square flex flex-col items-center justify-center gap-2 p-3">
-                      {src ? (
-                        <img src={src} alt={label} className="w-full h-full object-cover" />
-                      ) : (
-                        <>
-                          <Icon size={20} strokeWidth={1.5} className="text-[var(--color-dim)]" />
-                          <span className="font-data text-[9px] text-[var(--color-dim)] uppercase text-center">
-                            {label}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  ))}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
+                  <div className="panel clip-corner p-3 flex flex-col gap-1">
+                    <span className="font-data text-[10px] text-[var(--color-dim)] uppercase">Polygon Count</span>
+                    <span className="font-data text-xs font-semibold text-[var(--color-cyan)]">{asset.polyCount || "Game Ready"}</span>
+                  </div>
+                  <div className="panel clip-corner p-3 flex flex-col gap-1">
+                    <span className="font-data text-[10px] text-[var(--color-dim)] uppercase">Vertices</span>
+                    <span className="font-data text-xs font-semibold text-[var(--color-text)]">{asset.vertices || "Optimized"}</span>
+                  </div>
+                  <div className="panel clip-corner p-3 flex flex-col gap-1 col-span-2 sm:col-span-1">
+                    <span className="font-data text-[10px] text-[var(--color-dim)] uppercase">Textures / Material</span>
+                    <span className="font-data text-xs text-[var(--color-muted)] truncate">{asset.textures || "Viewport Solid"}</span>
+                  </div>
                 </div>
               </div>
 
               <div>
-                <span className="font-data text-[10px] tracking-[0.2em] uppercase px-2.5 py-1 border border-[var(--color-line)] text-[var(--color-muted)]">
-                  {asset.category}
-                </span>
-                <h2 className="font-hud text-2xl sm:text-3xl uppercase text-[var(--color-text)] mt-4 mb-5">
+                <div className="flex items-center gap-2">
+                  <span className="font-data text-[10px] tracking-[0.2em] uppercase px-2.5 py-1 border border-[var(--color-line)] text-[var(--color-muted)] bg-[var(--color-panel)]">
+                    {asset.category}
+                  </span>
+                  <span className="font-data text-[10px] tracking-[0.15em] uppercase px-2.5 py-1 border border-[var(--color-good)]/40 text-[var(--color-good)] bg-[var(--color-good)]/5">
+                    {asset.status}
+                  </span>
+                </div>
+
+                <h2 className="font-hud text-2xl sm:text-3xl uppercase text-[var(--color-text)] mt-4 mb-4">
                   {asset.name}
                 </h2>
 
@@ -88,26 +86,30 @@ export default function AssetDetails({ asset, onClose }) {
 
                 <dl className="space-y-3 font-data text-sm mb-8">
                   {[
-                    ["Created In", asset.software],
+                    ["Software", asset.software],
                     ["Pipeline", asset.pipeline],
                     ["Status", asset.status],
-                    ["Poly Count", asset.polyCount || "—"],
+                    ["Polygon Count", asset.polyCount || "—"],
+                    ["Vertices", asset.vertices || "—"],
+                    ["Format", ".FBX (Binary 3D)"],
                   ].map(([k, v]) => (
                     <div key={k} className="flex justify-between border-b border-[var(--color-line-soft)] pb-2">
                       <dt className="text-[var(--color-dim)] uppercase tracking-wide">{k}</dt>
-                      <dd className="text-[var(--color-text)]">{v}</dd>
+                      <dd className="text-[var(--color-text)] font-medium">{v}</dd>
                     </div>
                   ))}
                 </dl>
 
                 {asset.modelUrl && (
-                  <a
+                  <GlowButton
+                    as="a"
                     href={asset.modelUrl}
                     download
-                    className="inline-flex items-center gap-2 font-hud text-xs tracking-[0.18em] uppercase px-5 py-3 border border-[var(--color-cyan)] text-[var(--color-cyan)] clip-corner hover:bg-[var(--color-cyan)]/10"
+                    icon={Download}
+                    className="w-full justify-center"
                   >
-                    <Download size={15} /> Download Model
-                  </a>
+                    Download .FBX Model
+                  </GlowButton>
                 )}
               </div>
             </div>

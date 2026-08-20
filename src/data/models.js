@@ -1,4 +1,4 @@
-﻿// 3D ASSET VAULT DATA
+// 3D ASSET VAULT DATA
 // To add a new Blender model, push one object into this array.
 // AssetVault.jsx, AssetCard.jsx and AssetDetails.jsx render entirely
 // from this data.
@@ -24,33 +24,17 @@ export const assetCategories = [
 
 export const models = [
   {
-    id: "house-building-01",
-    name: "Old House",
-    category: "Buildings",
-    software: "Blender",
-    pipeline: "Blender → FBX",
-    status: "Game Ready",
-    polyCount: null,
-    textures: null,
-    description:
-      "A detailed residential building asset created for environment concepting and level dressing, ready to be placed in architectural scenes.",
-    preview: null,
-    modelUrl: modelAssetPath("house2.fbx"),
-    wireframe: null,
-    textureSheet: null,
-    unityShot: null,
-  },
-  {
     id: "car-01",
     name: "Sports Car",
     category: "Vehicles",
     software: "Blender",
     pipeline: "Blender → FBX → Unity",
     status: "Game Ready",
-    polyCount: null,
-    textures: null,
+    polyCount: "39,372 Tris",
+    vertices: "118,116 Verts",
+    textures: "PBR Metallic / Viewport Solid",
     description:
-      "A custom sports car imported as FBX and shown in viewport solid mode for quick preview.",
+      "A high-detail custom sports car built in Blender with clean topology, separate sub-assemblies for wheels and bodywork, and ready for Unity wheel colliders and vehicle physics.",
     preview: null,
     modelUrl: modelAssetPath("Car2.fbx"),
     wireframe: null,
@@ -59,15 +43,16 @@ export const models = [
   },
   {
     id: "sword-01",
-    name: "Sword",
+    name: "Stylized Sword",
     category: "Props",
     software: "Blender",
-    pipeline: "Blender → FBX",
+    pipeline: "Blender → FBX → Unity",
     status: "Game Ready",
-    polyCount: null,
-    textures: null,
+    polyCount: "14,664 Tris",
+    vertices: "43,992 Verts",
+    textures: "Hand-crafted / Viewport Solid",
     description:
-      "A stylized sword asset exported from Blender for use in props, combat scenes, and fantasy environments.",
+      "A stylized melee weapon asset with bevelled blade geometry, guard detailing, and an ergonomic grip crafted for fantasy combat and action RPG equipment systems.",
     preview: null,
     modelUrl: modelAssetPath("Sword.fbx"),
     wireframe: null,
@@ -76,15 +61,16 @@ export const models = [
   },
   {
     id: "old-well-01",
-    name: "Old Well",
+    name: "Medieval Well",
     category: "Environments",
     software: "Blender",
-    pipeline: "Blender → FBX",
+    pipeline: "Blender → FBX → Unity",
     status: "Game Ready",
-    polyCount: null,
-    textures: null,
+    polyCount: "14,590 Tris",
+    vertices: "43,770 Verts",
+    textures: "Modular Stone / Timber",
     description:
-      "A detailed stone well environment asset suitable for medieval ruins, village scenes, and exploration-focused levels.",
+      "A detailed environment centerpiece featuring individually modeled stone masonry, wooden roof framing, and crank mechanism suitable for medieval ruins and village courtyards.",
     preview: null,
     modelUrl: modelAssetPath("Old_Well.fbx"),
     wireframe: null,
@@ -93,15 +79,16 @@ export const models = [
   },
   {
     id: "door-01",
-    name: "Door",
+    name: "Dungeon Door",
     category: "Props",
     software: "Blender",
-    pipeline: "Blender → FBX",
+    pipeline: "Blender → FBX → Unity",
     status: "Game Ready",
-    polyCount: null,
-    textures: null,
+    polyCount: "2,177 Tris",
+    vertices: "6,531 Verts",
+    textures: "Hard Surface / Iron Reinforcement",
     description:
-      "A modular door prop crafted for fantasy interiors, dungeon scenes, and interactive environment storytelling.",
+      "A modular dungeon entryway prop with iron banded studs, reinforced hinges, and pivot-ready layout for interactive door opening and unlocking sequences.",
     preview: null,
     modelUrl: modelAssetPath("Door.fbx"),
     wireframe: null,
@@ -110,15 +97,16 @@ export const models = [
   },
   {
     id: "key-01",
-    name: "Key",
+    name: "Collectible Key",
     category: "Props",
     software: "Blender",
-    pipeline: "Blender → FBX",
+    pipeline: "Blender → FBX → Unity",
     status: "Game Ready",
-    polyCount: null,
-    textures: null,
+    polyCount: "19,603 Tris",
+    vertices: "58,809 Verts",
+    textures: "Engraved Metallic",
     description:
-      "A collectible key prop designed for puzzles, quests, and object interaction systems in game levels.",
+      "An ornate quest item and collectible puzzle prop designed for lock-and-key triggers, inventory inspection, and treasure chest mechanics in Unity.",
     preview: null,
     modelUrl: modelAssetPath("Key.fbx"),
     wireframe: null,
@@ -130,12 +118,13 @@ export const models = [
     name: "Robo Model",
     category: "Characters",
     software: "Blender",
-    pipeline: "Blender → FBX",
+    pipeline: "Blender → FBX → Unity",
     status: "Game Ready",
-    polyCount: null,
-    textures: null,
+    polyCount: "95,362 Tris",
+    vertices: "286,086 Verts",
+    textures: "Hard Surface Sci-Fi Armor",
     description:
-      "A stylized robotic character asset imported as FBX for interactive viewing and portfolio showcase.",
+      "A high-fidelity humanoid robotic character mesh featuring articulated mechanical joints, plating armor, and distinct functional parts engineered for sci-fi games.",
     preview: null,
     modelUrl: modelAssetPath("RoboModel2.fbx"),
     wireframe: null,
@@ -144,6 +133,5 @@ export const models = [
   },
 ];
 
-// Keep every portfolio entry visible. Assets without an FBX intentionally use
-// the safe preview state in ModelViewer instead of disappearing from the vault.
+// Keep every portfolio entry visible.
 export const visibleModels = models;
