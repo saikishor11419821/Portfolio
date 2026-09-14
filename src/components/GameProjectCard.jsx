@@ -1,5 +1,6 @@
-import { motion } from "framer-motion";
-import { Play, Code2, Video, Gamepad2 } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Play, Code2, Video, Gamepad2, ChevronDown, ChevronUp } from "lucide-react";
 import Reticle from "./HUD/Reticle";
 
 const STATUS_TONE = {
@@ -10,6 +11,7 @@ const STATUS_TONE = {
 };
 
 export default function GameProjectCard({ project, index = 0 }) {
+  const [showFeatures, setShowFeatures] = useState(false);
   const isPlaceholder = project.title === "Coming Soon";
 
   return (
@@ -18,17 +20,26 @@ export default function GameProjectCard({ project, index = 0 }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.5, delay: (index % 4) * 0.06 }}
+      className="h-full"
     >
-      <Reticle className="panel clip-corner overflow-hidden h-full flex flex-col" tone="cyan">
-        <div className="relative h-40 bg-[var(--color-navy)] flex items-center justify-center overflow-hidden">
+      <Reticle className="panel clip-corner overflow-hidden h-full flex flex-col group" tone="cyan">
+        <div className="relative h-44 bg-[var(--color-navy)] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-grid opacity-30" />
-          <Gamepad2
-            size={40}
-            strokeWidth={1}
-            className={isPlaceholder ? "text-[var(--color-dim)]" : "text-[var(--color-cyan)]"}
-          />
+          {project.thumbnail ? (
+            <img
+              src={project.thumbnail}
+              alt={project.title}
+              className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <Gamepad2
+              size={40}
+              strokeWidth={1}
+              className={isPlaceholder ? "text-[var(--color-dim)]" : "text-[var(--color-cyan)]"}
+            />
+          )}
           <span
-            className={`absolute top-3 left-3 font-data text-[10px] tracking-[0.15em] uppercase px-2 py-1 border ${STATUS_TONE[project.status]}`}
+            className={`absolute top-3 left-3 font-data text-[10px] tracking-[0.15em] uppercase px-2 py-1 border ${STATUS_TONE[project.status]} bg-[var(--color-void)]/85 backdrop-blur-sm z-10`}
           >
             {project.status}
           </span>
@@ -48,6 +59,39 @@ export default function GameProjectCard({ project, index = 0 }) {
           <p className="text-[var(--color-muted)] text-sm leading-relaxed mb-4 flex-1">
             {project.description}
           </p>
+
+          {project.features && project.features.length > 0 && (
+            <div className="mb-4 pt-3 border-t border-[var(--color-line-soft)]">
+              <button
+                type="button"
+                onClick={() => setShowFeatures(!showFeatures)}
+                className="flex items-center justify-between w-full font-data text-[11px] text-[var(--color-cyan)] uppercase tracking-wider py-1 hover:text-glow-cyan transition-colors"
+              >
+                <span>Key Features ({project.features.length})</span>
+                {showFeatures ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+
+              <AnimatePresence>
+                {showFeatures && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <ul className="mt-2 space-y-2 font-data text-[11px] text-[var(--color-muted)] leading-relaxed bg-[var(--color-void)]/80 border border-[var(--color-line-soft)] p-2.5 rounded">
+                      {project.features.map((feat, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5">
+                          <span className="text-[var(--color-cyan)] select-none">▸</span>
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-1.5 mb-5">
             {project.tags.map((t) => (

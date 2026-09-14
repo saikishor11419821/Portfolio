@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Play, Code2, Car, ChevronLeft, ChevronRight } from "lucide-react";
+import { Play, Code2, Car, ChevronLeft, ChevronRight, Gamepad2 } from "lucide-react";
 import GlowButton from "./HUD/GlowButton";
 import Reticle from "./HUD/Reticle";
-import { featuredProject } from "../data/projects";
+import { featuredProjects, featuredProject } from "../data/projects";
 
 export default function FeaturedGame() {
-  const p = featuredProject;
+  const projectsList = featuredProjects || [featuredProject];
+  const [selectedId, setSelectedId] = useState(projectsList[0].id);
+  const p = projectsList.find((item) => item.id === selectedId) || projectsList[0];
   const [imageIndex, setImageIndex] = useState(0);
   const gallery = Array.isArray(p.gallery) && p.gallery.length ? p.gallery : p.cover ? [p.cover] : [];
   const imageSrc = gallery.length ? gallery[imageIndex % gallery.length] : null;
@@ -17,9 +19,33 @@ export default function FeaturedGame() {
   return (
     <section className="relative py-24 sm:py-32 px-5 sm:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-3 mb-8 text-[var(--color-purple)]">
-          <span className="w-6 h-px bg-[var(--color-purple)]" />
-          <span className="font-data text-xs tracking-[0.3em] uppercase">Featured Build</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3 text-[var(--color-purple)]">
+            <span className="w-6 h-px bg-[var(--color-purple)]" />
+            <span className="font-data text-xs tracking-[0.3em] uppercase">Featured Build</span>
+          </div>
+
+          {projectsList.length > 1 && (
+            <div className="flex items-center gap-2 p-1 bg-[var(--color-navy)] border border-[var(--color-line)]">
+              {projectsList.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedId(item.id);
+                    setImageIndex(0);
+                  }}
+                  className={`font-data text-xs px-3.5 py-1.5 uppercase tracking-wider transition-all ${
+                    selectedId === item.id
+                      ? "bg-[var(--color-purple)] text-white font-semibold shadow-[0_0_12px_rgba(176,107,255,0.4)]"
+                      : "text-[var(--color-muted)] hover:text-[var(--color-text)]"
+                  }`}
+                >
+                  {item.title}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <Reticle className="panel clip-corner overflow-hidden" tone="purple" active>

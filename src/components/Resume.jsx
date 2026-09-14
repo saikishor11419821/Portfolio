@@ -40,7 +40,7 @@ export default function Resume() {
               </div>
               <div>
                 <p className="text-[var(--color-dim)] uppercase tracking-[0.1em] text-xs mb-1">Projects</p>
-                <p className="text-[var(--color-muted)]">DriveVerse City — Open-World Driving Game</p>
+                <p className="text-[var(--color-muted)]">DriveVerse City (Open-World 3D) · Street Cat (2.5D Runner)</p>
               </div>
               <div>
                 <p className="text-[var(--color-dim)] uppercase tracking-[0.1em] text-xs mb-1">Contact</p>

@@ -79,6 +79,24 @@ export const skillGroups = [
 // UNDER THE HOOD — technical systems breakdown
 export const technicalSystems = [
   {
+    id: "power-up-system",
+    title: "Power-Up System (Street Cat)",
+    what: "Modular power-up framework implementing Magnet, Shield, and Score Multiplier with active HUD indicators and timers.",
+    tech: ["Unity", "C#", "ScriptableObjects", "Coroutines"],
+  },
+  {
+    id: "character-customization",
+    title: "Skin Shop & Customization",
+    what: "In-game character customization shop enabling players to preview, unlock, and equip multiple cat skins using collected coins.",
+    tech: ["Unity", "C#", "PlayerPrefs", "Mesh Swapping"],
+  },
+  {
+    id: "endless-runner-spawner",
+    title: "Endless Runner Generation",
+    what: "Procedural 2.5D track generation system with continuously generated obstacles, coin paths, and adaptive challenge scaling.",
+    tech: ["Unity", "C#", "Object Pooling", "Procedural Generation"],
+  },
+  {
     id: "player-controller",
     title: "Player Controller",
     what: "Handles movement, jumping, sliding and animation blending for the third-person character.",
