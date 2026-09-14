@@ -131,6 +131,24 @@ export const models = [
     textureSheet: null,
     unityShot: null,
   },
+  {
+    id: "house-01",
+    name: "Architectural House",
+    category: "Buildings",
+    software: "Blender",
+    pipeline: "Blender → FBX → Unity",
+    status: "Game Ready",
+    polyCount: "Modular Architecture",
+    vertices: "Clean Mesh Topology",
+    textures: "PBR Architectural / Exterior Finishes",
+    description:
+      "A game-ready 3D architectural house model modeled in Blender with clean modular topology, roof framing, and entryway detailing. Engineered for Unity environment building, town and village scenes, and open-world gameplay.",
+    preview: null,
+    modelUrl: modelAssetPath("House.fbx"),
+    wireframe: null,
+    textureSheet: null,
+    unityShot: null,
+  },
 ];
 
 // Keep every portfolio entry visible.

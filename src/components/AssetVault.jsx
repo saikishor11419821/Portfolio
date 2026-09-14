@@ -1,6 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { Download, Eye, Box, Car, Shield, Compass, Key, Bot, DoorOpen } from "lucide-react";
+import { Download, Eye, Box, Car, Shield, Compass, Key, Bot, DoorOpen, Home } from "lucide-react";
 import SectionHeading from "./HUD/SectionHeading";
 import GlowButton from "./HUD/GlowButton";
 import Reticle from "./HUD/Reticle";
@@ -12,6 +12,7 @@ const AssetDetails = lazy(() => import("./AssetDetails"));
 
 const MODEL_ICONS = {
   "car-01": Car,
+  "house-01": Home,
   "sword-01": Shield,
   "old-well-01": Compass,
   "door-01": DoorOpen,

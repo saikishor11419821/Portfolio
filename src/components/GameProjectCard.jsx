@@ -46,9 +46,18 @@ export default function GameProjectCard({ project, index = 0 }) {
         </div>
 
         <div className="p-5 flex flex-col flex-1">
-          <h3 className="font-hud text-base tracking-[0.05em] uppercase text-[var(--color-text)] mb-2">
-            {project.title}
-          </h3>
+          <div className="flex items-center gap-2.5 mb-2">
+            {project.icon && (
+              <img
+                src={project.icon}
+                alt={`${project.title} icon`}
+                className="w-5 h-5 rounded object-contain border border-[var(--color-line)] bg-[var(--color-void)] shrink-0"
+              />
+            )}
+            <h3 className="font-hud text-base tracking-[0.05em] uppercase text-[var(--color-text)]">
+              {project.title}
+            </h3>
+          </div>
 
           <div className="grid grid-cols-3 gap-1 font-data text-[10px] text-[var(--color-dim)] uppercase mb-3">
             <span>{project.genre}</span>
