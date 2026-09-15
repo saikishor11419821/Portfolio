@@ -140,35 +140,13 @@ raw URL text is never printed on the page.
 
 ## 10. How to configure the contact form
 
-The form uses [Formspree](https://formspree.io) — no custom backend
-required.
+The form is pre-configured to send messages directly to your email (`saikishor11419821@gmail.com`) via FormSubmit — no backend server required.
 
-1. Create a free account at formspree.io and create a new form.
-2. Copy the endpoint it gives you (looks like
-   `https://formspree.io/f/abcdwxyz`).
-3. Open `src/components/Contact.jsx` and replace the placeholder:
+- **First submission activation**: The very first time a message is submitted through the form, FormSubmit sends a confirmation email to `saikishor11419821@gmail.com`. Click the **Activate Form** button in that email once, and all future messages will arrive directly in your inbox.
+- **Custom endpoint (optional)**: If you prefer Formspree or a custom backend, set `VITE_CONTACT_ENDPOINT` or `VITE_FORMSPREE_ENDPOINT` in your `.env` file.
+- **Direct Mail Fallback**: If the network request ever fails or is blocked by an extension, visitors are provided with a 1-click `mailto:` link prefilled with their message.
 
-   ```js
-   const FORMSPREE_ENDPOINT = "https://formspree.io/f/your-form-id";
-   ```
-
-   with your real endpoint.
-
-   Alternatively, create a `.env` file in the project root and add:
-
-   ```env
-   VITE_FORMSPREE_ENDPOINT=https://formspree.io/f/abcdwxyz
-   ```
-
-   Then restart the Vite dev server.
-
-Prefer EmailJS instead? Swap the `fetch()` call inside the `onSubmit`
-function in `Contact.jsx` for an `emailjs.send(...)` call — the form UI
-and validation stay the same either way.
-
-Also update the direct contact details (email, LinkedIn, GitHub, Itch.io,
-YouTube) in `src/data/socials.js` — the Contact section and Footer both
-read from there.
+Also update your direct contact details (email, phone, LinkedIn, GitHub, Itch.io) in `src/data/socials.js` — the Contact section and Footer both read from there.
 
 ## 11. How to deploy to Vercel
 

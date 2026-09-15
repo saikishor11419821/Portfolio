@@ -8,41 +8,57 @@ import { socials, resumePath } from "../data/socials";
 
 // ---------------------------------------------------------------------
 // Contact form config.
-// Sign up at https://formspree.io, create a form, and set
-// VITE_FORMSPREE_ENDPOINT in a .env file with the endpoint URL.
-// No custom backend is used — the form POSTs directly to Formspree.
-// (Swap this block for EmailJS or a server-side mail service if needed.)
+// Sends directly to saikishor11419821@gmail.com via FormSubmit AJAX endpoint.
+// No custom backend required. (Supports VITE_CONTACT_ENDPOINT or VITE_FORMSPREE_ENDPOINT
+// if custom endpoint is set in .env)
 // ---------------------------------------------------------------------
-const FORMSPREE_ENDPOINT = import.meta.env.VITE_FORMSPREE_ENDPOINT || "";
+const RECIPIENT_EMAIL = socials.email || "saikishor11419821@gmail.com";
+const CONTACT_ENDPOINT =
+  import.meta.env.VITE_CONTACT_ENDPOINT ||
+  import.meta.env.VITE_FORMSPREE_ENDPOINT ||
+  `https://formsubmit.co/ajax/${RECIPIENT_EMAIL}`;
 
 export default function Contact() {
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [status, setStatus] = useState("idle"); // idle | sending | success | error
+  const [errorMessage, setErrorMessage] = useState("");
 
   const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (!FORMSPREE_ENDPOINT) {
-      setStatus("error");
-      return;
-    }
-
     setStatus("sending");
+    setErrorMessage("");
+
     try {
-      const res = await fetch(FORMSPREE_ENDPOINT, {
+      const res = await fetch(CONTACT_ENDPOINT, {
         method: "POST",
-        headers: { Accept: "application/json", "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          _replyto: form.email,
+          _subject: form.subject ? `[Portfolio] ${form.subject}` : `[Portfolio] Message from ${form.name}`,
+          message: form.message,
+          _captcha: "false",
+        }),
       });
-      if (res.ok) {
+
+      const data = await res.json().catch(() => null);
+
+      if (res.ok && (!data || data.success !== "false")) {
         setStatus("success");
         setForm({ name: "", email: "", subject: "", message: "" });
       } else {
         setStatus("error");
+        setErrorMessage(data?.message || "Failed to deliver message via form.");
       }
     } catch {
       setStatus("error");
+      setErrorMessage("Network error while sending message.");
     }
   };
 
@@ -144,23 +160,36 @@ export default function Contact() {
               </GlowButton>
 
               {status === "success" && (
-                <motion.p
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="font-data text-xs text-[var(--color-good)] text-center"
+                  className="font-data text-xs text-[var(--color-good)] text-center space-y-1"
                 >
-                  Message sent — thanks for reaching out.
-                </motion.p>
+                  <p>Message sent directly to {RECIPIENT_EMAIL} — thanks for reaching out!</p>
+                </motion.div>
               )}
               {status === "error" && (
-                <motion.p
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="font-data text-xs text-[var(--color-danger)] text-center"
+                  className="font-data text-xs text-[var(--color-danger)] text-center space-y-1"
                 >
-                  Form isn't connected yet — add your Formspree endpoint in
-                  Contact.jsx, or email {socials.email} directly.
-                </motion.p>
+                  <p>{errorMessage || "Failed to send message via form."}</p>
+                  <p>
+                    You can also{" "}
+                    <a
+                      href={`mailto:${RECIPIENT_EMAIL}?subject=${encodeURIComponent(
+                        form.subject || `Message from ${form.name}`
+                      )}&body=${encodeURIComponent(
+                        `Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`
+                      )}`}
+                      className="text-[var(--color-cyan)] underline hover:text-white"
+                    >
+                      click here to email {RECIPIENT_EMAIL} directly
+                    </a>
+                    .
+                  </p>
+                </motion.div>
               )}
             </form>
           </Reticle>
