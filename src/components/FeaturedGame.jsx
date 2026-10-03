@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Play, Code2, Car, ChevronLeft, ChevronRight, Gamepad2 } from "lucide-react";
+import { Play, Code2, Car, ChevronLeft, ChevronRight } from "lucide-react";
 import GlowButton from "./HUD/GlowButton";
 import Reticle from "./HUD/Reticle";
 import { featuredProjects, featuredProject } from "../data/projects";
@@ -26,7 +26,7 @@ export default function FeaturedGame() {
           </div>
 
           {projectsList.length > 1 && (
-            <div className="flex items-center gap-2 p-1 bg-[var(--color-navy)] border border-[var(--color-line)]">
+            <div className="flex items-center gap-2 p-1 bg-[var(--color-navy)] border border-[var(--color-line)] flex-wrap">
               {projectsList.map((item) => (
                 <button
                   key={item.id}
